@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using GMap.NET;
+using GMap.NET.MapProviders;
 
 namespace PublicTransportSimulator
 {
@@ -15,6 +17,11 @@ namespace PublicTransportSimulator
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void MainWindow_Load(object sender, EventArgs e)
+        {
+            gMapControl1.MapProvider = GMapProviders.YandexMap;
         }
     }
 }
