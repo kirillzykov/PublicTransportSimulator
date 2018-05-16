@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using GMap.NET;
@@ -23,7 +24,7 @@ namespace PublicTransportSimulator
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            gMapControl1.MapProvider = GMapProviders.GoogleMap;
+            gMapControl1.MapProvider = GMapProviders.YandexMap;
             gMapControl1.Zoom = 5;
             gMapControl1.MaxZoom = 15;
             gMapControl1.MinZoom = 3;
@@ -55,7 +56,21 @@ namespace PublicTransportSimulator
 
         private void StartButton_Click(object sender, EventArgs e)
         {
-            AddPoint(52.0975500, 23.6877500);
+            DoWorkAsyncInfiniteLoop();
+            //AddPoint(52.0975500, 23.6877500);
+        }
+
+        private async Task DoWorkAsyncInfiniteLoop()
+        {
+            while (true)
+            {
+                // do the work in the loop
+                string newData = DateTime.Now.ToLongTimeString();
+                // update the UI
+                label5.Text = "ASYNC LOOP - " + newData;
+                // don't run again for at least 200 milliseconds
+                await Task.Delay(200);
+            }
         }
 
         private void StopButton_Click(object sender, EventArgs e)
