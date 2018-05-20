@@ -15,6 +15,7 @@ using GMap.NET;
 using GMap.NET.MapProviders;
 using GMap.NET.WindowsForms;
 using GMap.NET.WindowsForms.Markers;
+using GMap.NET.WindowsForms.ToolTips;
 
 namespace PublicTransportSimulator
 {
@@ -26,6 +27,7 @@ namespace PublicTransportSimulator
         private GMapOverlay markersOverlayStops = new GMapOverlay("Stops markers");
         private GMapOverlay markersOverlayTransport = new GMapOverlay("Transport markers");
         private GMapOverlay routes = new GMapOverlay("routes");
+
         private int kek = 0;
         private CancellationTokenSource cts;
 
@@ -116,7 +118,7 @@ namespace PublicTransportSimulator
             List<int> lines = new List<int>();
             for (int i = 0; i < map_stops.Count; i++)
             {
-                AddPoint(map_stops[i].coord_X, map_stops[i].coord_Y);
+                AddPoint(map_stops[i].coord_X, map_stops[i].coord_Y, map_stops[i].name);
                 for (int j = 0; j < map_stops[i].adjacentIdList.Count; j++)
                 {
                     bool flag = false;
@@ -211,21 +213,23 @@ namespace PublicTransportSimulator
                 AddTrans(map_stops[map_transport[i].last_stop - 1].coord_X, map_stops[map_transport[i].last_stop - 1].coord_Y, map_stops[map_transport[i].next_stop - 1].coord_X, map_stops[map_transport[i].next_stop - 1].coord_Y, map_transport[i].progress);
             }
 
-            foreach (var m in markersOverlayStops.Markers)
+            /*foreach (var m in markersOverlayStops.Markers)
             {
                 richTextBox1.Text += m.Tag.ToString() + "\n";
-            }
+            }*/
         }
 
-        private void AddPoint(double latitude, double longtitude)
+        private void AddPoint(double latitude, double longtitude, string name)
         {
             gMapControl1.Position = new PointLatLng(latitude, longtitude);
             //GMapOverlay markersOverlay = new GMapOverlay("markers");
             GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(latitude, longtitude), GMarkerGoogleType.green);
-            marker.ToolTipMode = MarkerTooltipMode.OnMouseOver;
 
-            marker.Tag = kek;
-            kek++;
+            marker.ToolTipMode = MarkerTooltipMode.OnMouseOver;
+            marker.ToolTip = new GMapRoundedToolTip(marker);
+            marker.ToolTipText = name;
+            //marker.Tag = kek;
+            //kek++;
             markersOverlayStops.Markers.Add(marker);
             gMapControl1.Overlays.Add(markersOverlayStops);
         }
@@ -243,16 +247,6 @@ namespace PublicTransportSimulator
             gMapControl1.Overlays.Add(routes);
         }
 
-        private void StartButton_Click(object sender, EventArgs e)
-        {
-            if (cts == null)
-            {
-                cts = new CancellationTokenSource();
-                DoWorkAsyncInfiniteLoop(cts.Token);
-            }
-            //AddPoint(52.0975500, 23.6877500);
-        }
-
         private async Task DoWorkAsyncInfiniteLoop(CancellationToken token)
         {
             double i = 0;
@@ -260,37 +254,22 @@ namespace PublicTransportSimulator
             {
                 Stopwatch sw = Stopwatch.StartNew();
                 // do the work in the loop
-                string newData = DateTime.Now.ToLongTimeString();
+                //string newData = DateTime.Now.ToLongTimeString();
                 // update the UI
-                //label5.Text = "ASYNC LOOP - " + newData;
-                //AddPoint(52.0975500 + i, 23.6877500);
+                //label4.Text = "ASYNC LOOP - " + newData;
+                //AddPoint(52.0975500 + i, 23.6877500, "");
                 i += 0.01;
                 foreach (var mT in markersOverlayTransport.Markers)
                 {
                     mT.Position = new PointLatLng(mT.Position.Lat + i, mT.Position.Lng + i);
                 }
+                //gMapControl1.Update();
                 // don't run again for at least 200 milliseconds
                 await Task.Delay(1000);
                 sw.Stop();
                 token.ThrowIfCancellationRequested();
-                label5.Text = sw.ElapsedMilliseconds.ToString();
+                label4.Text = sw.ElapsedMilliseconds.ToString();
             }
-        }
-
-        private void StopButton_Click(object sender, EventArgs e)
-        {
-            //AddRoute(52.0975500, 23.6877500, 52.1975500, 23.6877500);
-            if (cts != null)
-            {
-                cts.Cancel();
-                cts = null;
-            }
-        }
-
-        private void trackBar2_ValueChanged(object sender, EventArgs e)
-        {
-            gMapControl1.Zoom = trackBar2.Value;
-            label4.Text = gMapControl1.Zoom.ToString();
         }
 
         private void gMap_OnMarkerClick(GMapMarker item, MouseEventArgs e)
@@ -347,5 +326,29 @@ namespace PublicTransportSimulator
                 mT.Position = new PointLatLng(mT.Position.Lat + 0.01, mT.Position.Lng + 0.01);
             }
         }
+
+        private void StartButton_Click(object sender, EventArgs e)
+        {
+            if (cts == null)
+            {
+                cts = new CancellationTokenSource();
+                DoWorkAsyncInfiniteLoop(cts.Token);
+            }
+        }
+
+        private void StopButton_Click(object sender, EventArgs e)
+        {
+            if (cts != null)
+            {
+                cts.Cancel();
+                cts = null;
+            }
+        }
+
+        private void trackBar2_ValueChanged(object sender, EventArgs e)
+        {
+            gMapControl1.Zoom = trackBar2.Value;
+            label4.Text = gMapControl1.Zoom.ToString();
+        }       
     }
 }

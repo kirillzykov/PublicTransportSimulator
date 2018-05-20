@@ -138,6 +138,7 @@
             this.trackBar2.Size = new System.Drawing.Size(45, 424);
             this.trackBar2.TabIndex = 22;
             this.trackBar2.Value = 5;
+            this.trackBar2.ValueChanged += new System.EventHandler(this.trackBar2_ValueChanged);
             // 
             // label3
             // 
@@ -205,6 +206,7 @@
             this.StopButton.TabIndex = 15;
             this.StopButton.Text = "Stop";
             this.StopButton.UseVisualStyleBackColor = true;
+            this.StopButton.Click += new System.EventHandler(this.StopButton_Click);
             // 
             // StartButton
             // 
@@ -215,6 +217,7 @@
             this.StartButton.TabIndex = 14;
             this.StartButton.Text = "Start";
             this.StartButton.UseVisualStyleBackColor = true;
+            this.StartButton.Click += new System.EventHandler(this.StartButton_Click);
             // 
             // groupBox1
             // 
