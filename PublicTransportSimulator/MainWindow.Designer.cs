@@ -181,10 +181,14 @@
             // trackBar1
             // 
             this.trackBar1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.trackBar1.Location = new System.Drawing.Point(288, 402);
+            this.trackBar1.Location = new System.Drawing.Point(301, 402);
+            this.trackBar1.Maximum = 5;
+            this.trackBar1.Minimum = 1;
             this.trackBar1.Name = "trackBar1";
             this.trackBar1.Size = new System.Drawing.Size(145, 45);
             this.trackBar1.TabIndex = 17;
+            this.trackBar1.Value = 1;
+            this.trackBar1.ValueChanged += new System.EventHandler(this.trackBar1_ValueChanged);
             // 
             // ResetButton
             // 

@@ -27,7 +27,7 @@ namespace PublicTransportSimulator
         private GMapOverlay markersOverlayStops = new GMapOverlay("Stops markers");
         private GMapOverlay markersOverlayTransport = new GMapOverlay("Transport markers");
         private GMapOverlay routes = new GMapOverlay("routes");
-
+        private int timeMultiplyer = 1000;
         private int kek = 0;
         private CancellationTokenSource cts;
 
@@ -267,22 +267,84 @@ namespace PublicTransportSimulator
         private async Task DoWorkAsyncInfiniteLoop(CancellationToken token)
         {
             double i = 0;
+            double speed = (double)numericUpDown1.Value * 10 / 36;
             while (true)
             {
                 Stopwatch sw = Stopwatch.StartNew();
                 // do the work in the loop
-                //string newData = DateTime.Now.ToLongTimeString();
+
+                int counter = 0;
+                foreach (var mT in markersOverlayTransport.Markers)
+                {
+                    if (map_transport[counter].stay_time == 0)
+                    {
+                        double distance = 0;
+                        for (int j = 0; j < map_stops[map_transport[counter].last_stop - 1].adjacentIdList.Count; j++)
+                        {
+                            if (map_transport[counter].next_stop == map_stops[map_transport[counter].last_stop - 1].adjacentIdList[j])
+                            {
+                                distance = map_stops[map_transport[counter].last_stop - 1].adjacentRoadsList[j];
+                                break;
+                            }
+                        }
+                        double change = speed / distance;
+                        map_transport[counter].progress += change; //пройденный процент пути
+                        double lat = (map_stops[map_transport[counter].next_stop - 1].coord_X - map_stops[map_transport[counter].last_stop - 1].coord_X) * change;
+                        double lng = (map_stops[map_transport[counter].next_stop - 1].coord_Y - map_stops[map_transport[counter].last_stop - 1].coord_Y) * change;
+                        if (map_transport[counter].progress > 1)
+                        {
+                            lat -= (map_stops[map_transport[counter].next_stop - 1].coord_X - map_stops[map_transport[counter].last_stop - 1].coord_X) * (map_transport[counter].progress - 1);
+                            lng -= (map_stops[map_transport[counter].next_stop - 1].coord_Y - map_stops[map_transport[counter].last_stop - 1].coord_Y) * (map_transport[counter].progress - 1);
+                        }
+                        mT.Position = new PointLatLng(mT.Position.Lat + lat, mT.Position.Lng + lng);
+                        if (map_transport[counter].progress >= 1) //Присутствует погрешность меньше секунды
+                        {
+                            map_transport[counter].stay_time = (int)map_stops[map_transport[counter].next_stop - 1].weight;
+                        }
+                    }
+                    else
+                    {
+                        map_transport[counter].stay_time--;
+                        if (map_transport[counter].stay_time == 0)
+                        {
+                            map_transport[counter].progress = 0;
+                            int route_num = 0;
+                            for (int j = 0; j < map_routes.Count; j++)
+                            {
+                                if (map_transport[counter].ID == map_routes[j].ID)
+                                {
+                                    route_num = j;
+                                    break;
+                                }
+                            }
+                            int next_stage;
+                            for (int j = 0; j < map_routes[route_num].way.Count; j++) //Вылетит при неверных входных данных
+                            {
+                                if (map_routes[route_num].way[j] == map_transport[counter].last_stop && map_routes[route_num].way[j + 1] == map_transport[counter].next_stop)
+                                {
+                                    if (map_routes[route_num].way[j + 1] == map_routes[route_num].way[0]) next_stage = map_routes[route_num].way[1];
+                                    else next_stage = map_routes[route_num].way[j + 2];
+                                    map_transport[counter].last_stop = map_transport[counter].next_stop;
+                                    map_transport[counter].next_stop = next_stage;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    counter++;
+                }
+
+                string newData = DateTime.Now.ToLongTimeString();
                 // update the UI
-                //label4.Text = "ASYNC LOOP - " + newData;
-                //AddPoint(52.0975500 + i, 23.6877500, "");
-                i += 0.01;
+                //label5.Text = "ASYNC LOOP - " + newData;
+                //AddPoint(52.0975500 + i, 23.6877500);
+                /*i += 0.01;
                 foreach (var mT in markersOverlayTransport.Markers)
                 {
                     mT.Position = new PointLatLng(mT.Position.Lat + i, mT.Position.Lng + i);
-                }
-                //gMapControl1.Update();
+                }*/
                 // don't run again for at least 200 milliseconds
-                await Task.Delay(1000);
+                await Task.Delay(timeMultiplyer);
                 sw.Stop();
                 token.ThrowIfCancellationRequested();
                 label4.Text = sw.ElapsedMilliseconds.ToString();
@@ -369,6 +431,37 @@ namespace PublicTransportSimulator
         {
             gMapControl1.Zoom = trackBar2.Value;
             label4.Text = gMapControl1.Zoom.ToString();
+        }
+
+        private void trackBar1_ValueChanged(object sender, EventArgs e)
+        {
+            switch (trackBar1.Value)
+            {
+                case 1:
+                    label1.Text = "x1";
+                    timeMultiplyer = 1000;
+                    break;
+
+                case 2:
+                    label1.Text = "x5";
+                    timeMultiplyer = 200;
+                    break;
+
+                case 3:
+                    label1.Text = "x20";
+                    timeMultiplyer = 50;
+                    break;
+
+                case 4:
+                    label1.Text = "x100";
+                    timeMultiplyer = 10;
+                    break;
+
+                case 5:
+                    label1.Text = "x300";
+                    timeMultiplyer = 10;
+                    break;
+            }
         }
     }
 }
