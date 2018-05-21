@@ -56,7 +56,6 @@ namespace PublicTransportSimulator
             command2 = new MenuItem("Your command name 2", new EventHandler(Method2));
             markerMenu.MenuItems.Add(command1);
             markerMenu.MenuItems.Add(command2);
-
             gMapControl1.MapProvider = GMapProviders.YandexMap;
             gMapControl1.Zoom = 5;
             gMapControl1.MaxZoom = 15;
@@ -64,7 +63,7 @@ namespace PublicTransportSimulator
             gMapControl1.MarkersEnabled = true;
             label4.Text = gMapControl1.Zoom.ToString();
             gMapControl1.OnMarkerClick += new MarkerClick(gMap_OnMarkerClick);
-            using (StreamReader sR = new StreamReader("stops.txt"))
+            using (StreamReader sR = new StreamReader("stops.txt", Encoding.GetEncoding(1251)))
             {
                 int score = 0;
                 BusStop tmp = new BusStop();
@@ -134,10 +133,11 @@ namespace PublicTransportSimulator
                     }
                 }
             }
-            for (int i = 0; i < lines.Count; i += 2)
+
+            /*for (int i = 0; i < lines.Count; i += 2)
             {
                 AddRoute(map_stops[lines[i] - 1].coord_X, map_stops[lines[i] - 1].coord_Y, map_stops[lines[i + 1] - 1].coord_X, map_stops[lines[i + 1] - 1].coord_Y);
-            }
+            }*/
             using (StreamReader sR = new StreamReader("routes.txt"))
             {
                 int score = 0;
@@ -210,13 +210,29 @@ namespace PublicTransportSimulator
             }
             for (int i = 0; i < map_transport.Count; i++)
             {
-                AddTrans(map_stops[map_transport[i].last_stop - 1].coord_X, map_stops[map_transport[i].last_stop - 1].coord_Y, map_stops[map_transport[i].next_stop - 1].coord_X, map_stops[map_transport[i].next_stop - 1].coord_Y, map_transport[i].progress);
+                AddTrans(map_stops[map_transport[i].last_stop - 1].coord_X, map_stops[map_transport[i].last_stop - 1].coord_Y, map_stops[map_transport[i].next_stop - 1].coord_X, map_stops[map_transport[i].next_stop - 1].coord_Y, map_transport[i].progress, map_transport[i].ID.ToString());
             }
 
-            /*foreach (var m in markersOverlayStops.Markers)
+            List<Color> clrList = new List<Color>();
+            clrList.Add(Color.FromArgb(4, 255, 0, 0));
+            clrList.Add(Color.FromArgb(4, 0, 255, 0));
+            clrList.Add(Color.FromArgb(4, 255, 255, 0));
+            clrList.Add(Color.FromArgb(4, 0, 0, 255));
+            int h = 0;
+            foreach (var route in map_routes)
             {
-                richTextBox1.Text += m.Tag.ToString() + "\n";
-            }*/
+                for (int i = 0; i < route.way.Count - 1; i++)
+                {
+                    AddRoute(
+                        map_stops[route.way[i] - 1].coord_X,
+                        map_stops[route.way[i] - 1].coord_Y,
+                        map_stops[route.way[i + 1] - 1].coord_X,
+                        map_stops[route.way[i + 1] - 1].coord_Y,
+                        clrList[h]
+                        );
+                }
+                h++;
+            }
         }
 
         private void AddPoint(double latitude, double longtitude, string name)
@@ -228,13 +244,14 @@ namespace PublicTransportSimulator
             marker.ToolTipMode = MarkerTooltipMode.OnMouseOver;
             marker.ToolTip = new GMapRoundedToolTip(marker);
             marker.ToolTipText = name;
+            //label4.Text = name;
             //marker.Tag = kek;
             //kek++;
             markersOverlayStops.Markers.Add(marker);
             gMapControl1.Overlays.Add(markersOverlayStops);
         }
 
-        private void AddRoute(double latitude1, double longtitude1, double latitude2, double longtitude2)
+        private void AddRoute(double latitude1, double longtitude1, double latitude2, double longtitude2, Color clr)
         {
             //GMapOverlay routes = new GMapOverlay("routes");
             List<PointLatLng> points = new List<PointLatLng>();
@@ -242,7 +259,7 @@ namespace PublicTransportSimulator
             points.Add(new PointLatLng(latitude2, longtitude2));
             gMapControl1.Position = new PointLatLng(latitude2, longtitude2);
             GMapRoute route = new GMapRoute(points, "route");
-            route.Stroke = new Pen(Color.Red, 3);
+            route.Stroke = new Pen(clr, 3);
             routes.Routes.Add(route);
             gMapControl1.Overlays.Add(routes);
         }
@@ -307,7 +324,7 @@ namespace PublicTransportSimulator
             return result;
         }
 
-        private void AddTrans(double latitude1, double longtitude1, double latitude2, double longtitude2, double progress)
+        private void AddTrans(double latitude1, double longtitude1, double latitude2, double longtitude2, double progress, string id)
         {
             double latitude, longtitude;
             latitude = latitude1 + (latitude2 - latitude1) * progress;
@@ -315,6 +332,9 @@ namespace PublicTransportSimulator
             gMapControl1.Position = new PointLatLng(latitude, longtitude);
             //GMapOverlay markersOverlay = new GMapOverlay("Transport markers");
             GMarkerGoogle marker = new GMarkerGoogle(new PointLatLng(latitude, longtitude), GMarkerGoogleType.blue);
+            marker.ToolTipMode = MarkerTooltipMode.Always;
+            marker.ToolTip = new GMapRoundedToolTip(marker);
+            marker.ToolTipText = id;
             markersOverlayTransport.Markers.Add(marker);
             gMapControl1.Overlays.Add(markersOverlayTransport);
         }
@@ -349,6 +369,6 @@ namespace PublicTransportSimulator
         {
             gMapControl1.Zoom = trackBar2.Value;
             label4.Text = gMapControl1.Zoom.ToString();
-        }       
+        }
     }
 }
